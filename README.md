@@ -81,6 +81,11 @@ owned value and be free to move it around, put it on the heap, etc.
 
 ### Actually returning an `AlmostFoo`
 
+> **Note:** The description of async stacks bellow is not what actually happens
+> in rustc but is enough to illustrate the point. `escher`'s API does make use
+> that the desired values are held across an await point to force them to be
+> included in the generated Future.
+
 As we saw, it is impossible to return an `AlmostFoo` instance since it
 references values from the stack. But what if we could freeze the stack after
 an `AlmostFoo` instance got constructed and then returned the whole stack?
@@ -128,10 +133,14 @@ exact memory location of it or accessing it in any way. The Future is opaque.
 
 `escher` builds upon the techniques described above and provides a solution for
 getting the pointer from within the opaque future struct. Each `Escher<T>`
-instance holds a Pinned Future that has been polled just enough times for the
-desired T to be constructed and a raw pointer to that inner T.
+instance holds a Pinned Future and a raw pointer to T. The pointer to T is
+computed by polling the Future just enough times for the desired T to be
+constructed.
 
 As its API, it provides the `as_ref()` and `as_mut()` methods that unsafely
 turn the raw pointer to T into a &T with its lifetime bound to the lifetime of
 `Escher<T>` itself. This ensures that the future will outlive any usage of the
 self-reference!
+
+Thank you for reading this far! If you would like to learn how escher uses the
+above concepts in detail please take a look at the implementation.
