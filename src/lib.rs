@@ -1,11 +1,3 @@
-use std::future::Future;
-use std::pin::Pin;
-use std::sync::atomic::{AtomicPtr, Ordering};
-use std::sync::Arc;
-use std::task::Context;
-
-use futures_task::noop_waker;
-
 //! > Self-referencial structs using async stacks
 //! 
 //! Escher is an extremely simple library providing a safe and sound API to build
@@ -163,6 +155,14 @@ use futures_task::noop_waker;
 //! 
 //! Thank you for reading this far! If you would like to learn how escher uses the
 //! above concepts in detail please take a look at the implementation.
+
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::atomic::{AtomicPtr, Ordering};
+use std::sync::Arc;
+use std::task::Context;
+
+use futures_task::noop_waker;
 
 /// The `Bind` trait defines a type level function that allows you convert a type that holds
 /// references of lifetime `'a` to a type that holds references of lifetime `'b`.
