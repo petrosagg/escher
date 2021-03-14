@@ -1,4 +1,5 @@
-# Escher
+# escher
+
 > Self-referencial structs using async stacks
 
 Escher is an extremely simple library providing a safe and sound API to build
