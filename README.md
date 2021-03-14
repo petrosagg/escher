@@ -4,7 +4,7 @@
 Escher is an extremely simple library providing a safe and sound API to build
 self-referencial structs. It works by (ab)using the async await trasformation
 of rustc. If you'd like to know more about the inner workings please take a
-look a the How it works section and the source code.
+look at the [How it works](#how-it-works) section and the source code.
 
 Compared to the state of the art escher:
 
