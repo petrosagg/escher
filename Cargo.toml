@@ -9,6 +9,9 @@ keywords = ["lifetime", "ownership", "borrowing", "self", "reference"]
 documentation = "https://docs.rs/escher"
 readme = "README.md"
 edition = "2018"
+exclude = [
+    "assets/*",
+]
 
 
 [dependencies]
