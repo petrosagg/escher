@@ -122,6 +122,16 @@ We're almost there! We now have an owned value, the future, that somewhere
 inside it has an AlmostFoo instance. However we have no way of retrieving the
 exact memory location of it or accessing it in any way. The Future is opaque.
 
-This is where `escher` comes in! `escher` essentially offers a way of peeking
-into the opaque Future and retrieving the raw pointer of our `AlmostFoo`
-instance.
+![Async stack](https://github.com/petrosagg/escher/blob/master/assets/async-stack.png?raw=true)
+
+### Putting it all together
+
+`escher` builds upon the techniques described above and provides a solution for
+getting the pointer from within the opaque future struct. Each `Escher<T>`
+instance holds a Pinned Future that has been polled just enough times for the
+desired T to be constructed and a raw pointer to that inner T.
+
+As its API, it provides the `as_ref()` and `as_mut()` methods that unsafely
+turn the raw pointer to T into a &T with its lifetime bound to the lifetime of
+`Escher<T>` itself. This ensures that the future will outlive any usage of the
+self-reference!
