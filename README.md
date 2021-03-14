@@ -74,6 +74,8 @@ and pass an `AlmostFoo` to them. In other words, as long as the code that wants
 to use `AlmostFoo` is above `make_foo()` we can use this technique and work
 with almost-self-references.
 
+![Almost self-reference](https://github.com/petrosagg/escher/blob/master/assets/almost-foo.png?raw=true)
+
 This is pretty restrictive though. Ideally we'd lke to be able return some
 owned value and be free to move it around, put it on the heap, etc.
 
