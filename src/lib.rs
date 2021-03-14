@@ -29,6 +29,11 @@ pub unsafe trait Bind<'a> {
 /// identical to T except for its lifetimes that are now bound to 'a.
 type Rebind<'a, T> = <T as Bind<'a>>::Out;
 
+/// Blanket implementation for any reference to owned data
+unsafe impl<'a, T: 'static> Bind<'a> for &'_ T {
+    type Out = &'a T;
+}
+
 /// Safe macro that makes a type rebindable by implementing `Bind` for all lifetimes
 #[macro_export]
 macro_rules! impl_rebind {
