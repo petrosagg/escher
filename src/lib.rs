@@ -30,7 +30,7 @@ pub unsafe trait Bind<'a> {
 type Rebind<'a, T> = <T as Bind<'a>>::Out;
 
 /// Blanket implementation for any reference to owned data
-unsafe impl<'a, T: 'static> Bind<'a> for &'_ T {
+unsafe impl<'a, T: ?Sized + 'static> Bind<'a> for &'_ T {
     type Out = &'a T;
 }
 
@@ -142,6 +142,18 @@ impl<T> Ref<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn simple_ref() {
+        let escher_heart = Escher::new(|r| async move {
+            let data: Vec<u8> = vec![240, 159, 146, 150];
+            let sparkle_heart = std::str::from_utf8(&data).unwrap();
+
+            r.capture(sparkle_heart).await;
+        });
+
+        assert_eq!("💖", *escher_heart.as_ref());
+    }
+
     #[test]
     fn it_works() {
         /// Holds a vector and a str reference to the data of the vector
