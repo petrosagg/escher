@@ -3,6 +3,37 @@
 
 ## How it works
 
+
+### The problem with self-references
+
+The main problem with self-referencial structs is that if such a struct was
+somehow constructed the compiler would then have to statically prove that it
+would not move again. This analysis is necessary because any move would
+invalidate self-pointers. The reason for that is that all pointers in rust are
+absolute memory addresses and moves just move data around in memory.
+
+To illustrate this with an example, imagine we defined a self-referencial
+struct that held a Vec and a pointer to it at the same time:
+
+```rust
+struct Foo {
+    s: Vec<u8>,
+    p: &Vec<u8>,
+}
+```
+
+Then, let's assume we had a way of getting an instance of this. Then we could
+write the following code that would lead to a dangling pointer in safe rust!
+
+```rust
+let foo = Foo::magic_construct();
+
+let bar = foo; // move foo to a new location
+```
+
+![Moves invalidate pointer](https://github.com/petrosagg/escher/blob/master/assets/moves-invalidate-pointer.png?raw=true)
+
+
 Escher is based on the idea that Rust allows you to construct
 quasi-self-referencial structs on the stack. This is something everyone is
 familiar with:
@@ -14,9 +45,9 @@ struct QuasiSelfRef<'a> {
 }
 
 fn foo() {
-    // create the String
+    // create a String
     let s = "some owned string".to_string();
-    // ..and the reference
+    // ..and a reference to it
     let p = &s[0..4];
 
     // capture both in a struct
