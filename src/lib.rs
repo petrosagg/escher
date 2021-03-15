@@ -213,6 +213,11 @@ unsafe impl<'a, T: ?Sized + 'static> Bind<'a> for &'_ T {
     type Out = &'a T;
 }
 
+/// Blanket implementation for any mutable reference to owned data
+unsafe impl<'a, T: ?Sized + 'static> Bind<'a> for &'_ mut T {
+    type Out = &'a mut T;
+}
+
 /// Safe macro that makes a type rebindable by implementing `Bind` for all lifetimes
 #[macro_export]
 macro_rules! impl_rebind {
