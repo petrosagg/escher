@@ -16,11 +16,11 @@
 //! This library provides the `Escher<T>` wrapper type that can hold self-referencial data and
 //! expose them safely through the `as_ref()` and `as_mut()` functions.
 //!
-//! You construct a self reference by calling Escher's constructor and providing a closure that
-//! will initialize your self-references on its stack. Your closure will be provided with a
+//! You construct a self reference by calling Escher's constructor and providing an async closure
+//! that will initialize your self-references on its stack. Your closure will be provided with a
 //! parameter `r` that has a single `capture()` method that consumes `r`.
 //!
-//! > Note: It is important to `.await` the result `.capture()` in order for escher to correctly
+//! > **Note:** It is important to `.await` the result `.capture()` in order for escher to correctly
 //! initialize your struct.
 //!
 //! Once all the data and references are created you can capture the desired ones. Simple
@@ -31,7 +31,7 @@
 //!
 //! # Examples
 //!
-//! ## A `Vec<u8>` and `&str` reference of its data.
+//! ## Simple `&str` view into an owned `Vec<u8>`
 //!
 //! The simplest way to use Escher is to create a reference of some data and then capture it:
 //!
