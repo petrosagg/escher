@@ -50,6 +50,19 @@ impl<T: for<'a> Bind<'a>> Escher<T> {
     /// Construct a self referencial struct using the provided closure. The user is expected to
     /// construct the desired data and references to them in the async stack and capture the
     /// desired state when ready.
+    ///
+    /// ```rust
+    /// use escher::Escher;
+    ///
+    /// let escher_heart = Escher::new(|r| async move {
+    ///     let data: Vec<u8> = vec![240, 159, 146, 150];
+    ///     let sparkle_heart = std::str::from_utf8(&data).unwrap();
+    ///
+    ///     r.capture(sparkle_heart).await;
+    /// });
+    ///
+    /// assert_eq!("💖", *escher_heart.as_ref());
+    /// ```
     pub fn new<B, F>(builder: B) -> Self
     where
         B: FnOnce(Ref<T>) -> F,
