@@ -65,11 +65,11 @@ impl<T: for<'a> Bind<'a>> Escher<T> {
     /// ```
     pub fn new<B, F>(builder: B) -> Self
     where
-        B: FnOnce(Ref<T>) -> F,
+        B: FnOnce(Capturer<T>) -> F,
         F: Future<Output = ()> + 'static,
     {
         let ptr = Arc::new(AtomicPtr::new(std::ptr::null_mut()));
-        let r = Ref { ptr: ptr.clone() };
+        let r = Capturer { ptr: ptr.clone() };
         let mut fut = Box::pin(builder(r));
 
         let waker = noop_waker();
@@ -97,10 +97,10 @@ impl<T: for<'a> Bind<'a>> Escher<T> {
         // 2. We have a pointer that points into the state of the future
         // 3. The state of the future will never move again because it's behind a Pin<Box<T>>
         // 4. The pointer `ptr` points to a valid instance of T because:
-        //    a. The only way to set the pointer is through Ref::capture that expects a T
-        //    b. The strong count of AtomicPtr is 2, so the async stack is in Ref::capture_ref because:
-        //       α. Ref is not Clone, so one cannot fake the increased refcount
-        //       β. Ref::capture consumes Ref so when the function returns the Arc will be dropped
+        //    a. The only way to set the pointer is through Capturer::capture that expects a T
+        //    b. The strong count of AtomicPtr is 2, so the async stack is in Capturer::capture_ref because:
+        //       α. Capturer is not Clone, so one cannot fake the increased refcount
+        //       β. Capturer::capture consumes Capturer so when the function returns the Arc will be dropped
         Escher { _fut: fut, ptr }
     }
 
@@ -124,11 +124,11 @@ impl<T: for<'a> Bind<'a>> Escher<T> {
     }
 }
 
-pub struct Ref<T> {
+pub struct Capturer<T> {
     ptr: Arc<AtomicPtr<T>>,
 }
 
-impl<T> Ref<T> {
+impl<T> Capturer<T> {
     async fn capture_ref<'a, LiveT>(self, val: &mut LiveT)
     where
         // once rustc supports equality constraints this can become: `T = Rebind<'static, LiveT>`
