@@ -6,7 +6,7 @@ use std::task::Context;
 
 use futures_task::noop_waker;
 
-/// The `Bind` trait defines a type level function that allows you convert a type that holds
+/// The `RebindTo` trait defines a type level function that allows you convert a type that holds
 /// references of lifetime `'a` to a type that holds references of lifetime `'b`.
 ///
 /// The trait is unsafe because the implementer needs to make sure that the associated type
@@ -14,28 +14,32 @@ use futures_task::noop_waker;
 /// prevent incantations like:
 ///
 /// ```ignore
-/// unsafe impl<'a> Bind<'a> for Foo<'_> {
+/// unsafe impl<'a> RebindTo<'a> for Foo<'_> {
 ///     type Out = Bar<'a>; // !!WRONG!!
 /// }
 ///
-/// unsafe impl<'a> Bind<'a> for Foo<'_> {
+/// unsafe impl<'a> RebindTo<'a> for Foo<'_> {
 ///     type Out = Foo<'a>; // CORRECT
 /// }
 /// ```
-pub unsafe trait Bind<'a> {
+pub unsafe trait RebindTo<'a> {
     type Out: 'a;
 }
+
+pub trait Rebindable: for<'a> RebindTo<'a> {}
+impl<T: for<'a> RebindTo<'a>> Rebindable for T {}
+
 /// Convinience alias to apply the type level function. `Rebind<'a, T>` computes a type that is
 /// identical to T except for its lifetimes that are now bound to 'a.
-pub type Rebind<'a, T> = <T as Bind<'a>>::Out;
+pub type Rebind<'a, T> = <T as RebindTo<'a>>::Out;
 
 /// Blanket implementation for any reference to owned data
-unsafe impl<'a, T: ?Sized + 'static> Bind<'a> for &'_ T {
+unsafe impl<'a, T: ?Sized + 'static> RebindTo<'a> for &'_ T {
     type Out = &'a T;
 }
 
 /// Blanket implementation for any mutable reference to owned data
-unsafe impl<'a, T: ?Sized + 'static> Bind<'a> for &'_ mut T {
+unsafe impl<'a, T: ?Sized + 'static> RebindTo<'a> for &'_ mut T {
     type Out = &'a mut T;
 }
 
@@ -46,7 +50,7 @@ pub struct Escher<T> {
     ptr: *mut T,
 }
 
-impl<T: for<'a> Bind<'a>> Escher<T> {
+impl<T: Rebindable> Escher<T> {
     /// Construct a self referencial struct using the provided closure. The user is expected to
     /// construct the desired data and references to them in the async stack and capture the
     /// desired state when ready.
@@ -105,7 +109,7 @@ impl<T: for<'a> Bind<'a>> Escher<T> {
     }
 
     /// Get a shared reference to the inner T with its lifetime bound to &self
-    pub fn as_ref(&self) -> &Rebind<T> {
+    pub fn as_ref<'a>(&'a self) -> &Rebind<'a, T> {
         // SAFETY
         // Validity of reference
         //    self.ptr points to a valid instance of T in side of self._fut (see safety argument in
@@ -118,7 +122,7 @@ impl<T: for<'a> Bind<'a>> Escher<T> {
     }
 
     /// Get a mut reference to the inner T with its lifetime bound to &mut self
-    pub fn as_mut(&mut self) -> &mut Rebind<T> {
+    pub fn as_mut<'a>(&'a mut self) -> &mut Rebind<'a, T> {
         // SAFETY: see safety argument of Self::as_ref
         unsafe { &mut *(self.ptr as *mut _) }
     }
@@ -132,7 +136,7 @@ impl<T> Capturer<T> {
     async fn capture_ref<'a, LiveT>(self, val: &mut LiveT)
     where
         // once rustc supports equality constraints this can become: `T = Rebind<'static, LiveT>`
-        LiveT: Bind<'static, Out = T>,
+        LiveT: RebindTo<'static, Out = T>,
     {
         self.ptr.store(val as *mut _ as *mut T, Ordering::Release);
         std::future::pending().await
@@ -141,7 +145,7 @@ impl<T> Capturer<T> {
     pub async fn capture<LiveT>(self, mut val: LiveT)
     where
         // once rustc supports equality constraints this can become: `T = Rebind<'static, LiveT>`
-        LiveT: Bind<'static, Out = T>,
+        LiveT: RebindTo<'static, Out = T>,
     {
         self.capture_ref(&mut val).await
     }

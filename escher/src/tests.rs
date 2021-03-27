@@ -17,7 +17,7 @@ fn simple_ref() {
 #[test]
 fn it_works() {
     /// Holds a vector and a str reference to the data of the vector
-    #[derive(Escher)]
+    #[derive(Rebindable)]
     struct VecStr<'a> {
         data: &'a Vec<u8>,
         s: &'a str,

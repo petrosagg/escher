@@ -27,7 +27,7 @@
 //! references to owned data can be captured directly (see first example).
 //!
 //! To capture more than one variable or capture references to non-owned data you will have to
-//! define your own reference struct that derives `Escher` (see second example).
+//! define your own reference struct that derives `Rebindable` (see second example).
 //!
 //! # Examples
 //!
@@ -54,9 +54,9 @@
 //! the variables:
 //!
 //! ```rust
-//! use escher::Escher;
+//! use escher::{Escher, Rebindable};
 //!
-//! #[derive(Escher)]
+//! #[derive(Rebindable)]
 //! struct VecStr<'this> {
 //!     data: &'this Vec<u8>,
 //!     s: &'this str,
@@ -99,9 +99,9 @@
 //! ## Multiple mixed references
 //!
 //! ```rust
-//! use escher::Escher;
+//! use escher::{Escher, Rebindable};
 //!
-//! #[derive(Escher)]
+//! #[derive(Rebindable)]
 //! struct MyStruct<'this> {
 //!     int_data: &'this Box<i32>,
 //!     int_ref: &'this i32,
@@ -275,4 +275,4 @@ mod escher;
 mod tests;
 
 pub use crate::escher::*;
-pub use escher_derive::Escher;
+pub use escher_derive::Rebindable;

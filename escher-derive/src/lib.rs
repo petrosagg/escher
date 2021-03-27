@@ -2,8 +2,8 @@ use proc_macro::{TokenStream};
 use quote::{quote, ToTokens};
 use syn::{parse_macro_input, DeriveInput};
 
-#[proc_macro_derive(Escher)]
-pub fn derive_escher(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(Rebindable)]
+pub fn derive_rebindable(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let name = input.ident;
@@ -33,7 +33,7 @@ pub fn derive_escher(input: TokenStream) -> TokenStream {
     }
 
     TokenStream::from(quote! {
-        unsafe impl<#(#impl_params),*> escher::Bind<'a> for #name<#(#type_params),*> {
+        unsafe impl<#(#impl_params),*> escher::RebindTo<'a> for #name<#(#type_params),*> {
            type Out = #name<#(#out_params),*>;
         }
     })
