@@ -39,8 +39,6 @@ unsafe impl<'a, T: ?Sized + 'static> Bind<'a> for &'_ mut T {
     type Out = &'a mut T;
 }
 
-pub use escher_derive::Escher;
-
 /// A containter of a self referencial struct. The self-referencial struct is constructed with the
 /// aid of the async/await machinery of rustc, see Escher::new.
 pub struct Escher<T> {

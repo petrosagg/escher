@@ -275,3 +275,4 @@ mod escher;
 mod tests;
 
 pub use crate::escher::*;
+pub use escher_derive::Escher;
