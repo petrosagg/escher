@@ -33,6 +33,35 @@
 //! assert_eq!("💖", *escher_heart.as_ref());
 //! ```
 //!
+//! ```rust
+//! use escher::{Escher, impl_rebind};
+//!
+//! struct MyStruct<'a> {
+//!     int_data: &'a Box<i32>,
+//!     int_reference: &'a i32,
+//!     float_reference: &'a mut f32,
+//! }
+//! impl_rebind!(MyStruct<'_>);
+//!
+//! let mut my_value = Escher::new(|r| async move {
+//!     let int_data = Box::new(42);
+//!     let mut float_data = Box::new(3.14);
+//!
+//!     r.capture(MyStruct{
+//!         int_data: &int_data,
+//!         int_reference: &int_data,
+//!         float_reference: &mut float_data,
+//!     }).await;
+//! });
+//!
+//! assert_eq!(Box::new(42), *my_value.as_ref().int_data);
+//! assert_eq!(3.14, *my_value.as_ref().float_reference);
+//!
+//! *my_value.as_mut().float_reference = (*my_value.as_ref().int_reference as f32) * 2.0;
+//!
+//! assert_eq!(84.0, *my_value.as_ref().float_reference);
+//! ```
+//!
 //! # How it works
 //!
 //! ## The problem with self-references
@@ -222,7 +251,15 @@ unsafe impl<'a, T: ?Sized + 'static> Bind<'a> for &'_ mut T {
 #[macro_export]
 macro_rules! impl_rebind {
     ($name:ident<'_>) => {
-        unsafe impl<'a> Bind<'a> for $name<'_> {
+        unsafe impl<'a> escher::Bind<'a> for $name<'_> {
+            type Out = $name<'a>;
+        }
+    };
+}
+
+macro_rules! impl_rebind_crate {
+    ($name:ident<'_>) => {
+        unsafe impl<'a> crate::Bind<'a> for $name<'_> {
             type Out = $name<'a>;
         }
     };
@@ -345,7 +382,7 @@ mod tests {
             data: &'a Vec<u8>,
             s: &'a str,
         }
-        impl_rebind!(VecStr<'_>);
+        impl_rebind_crate!(VecStr<'_>);
 
         let escher_heart = Escher::new(|r| async move {
             let data: Vec<u8> = vec![240, 159, 146, 150];
