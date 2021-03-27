@@ -7,9 +7,8 @@ description = "Self-referencial structs using the async/await transformation"
 repository = "https://github.com/petrosagg/escher"
 keywords = ["lifetime", "ownership", "borrowing", "self", "reference"]
 documentation = "https://docs.rs/escher"
-readme = "README.md"
-edition = "2018"
 readme = "../README.md"
+edition = "2018"
 exclude = [
     "assets/*",
 ]
