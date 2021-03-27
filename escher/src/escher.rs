@@ -27,7 +27,7 @@ pub unsafe trait Bind<'a> {
 }
 /// Convinience alias to apply the type level function. `Rebind<'a, T>` computes a type that is
 /// identical to T except for its lifetimes that are now bound to 'a.
-type Rebind<'a, T> = <T as Bind<'a>>::Out;
+pub type Rebind<'a, T> = <T as Bind<'a>>::Out;
 
 /// Blanket implementation for any reference to owned data
 unsafe impl<'a, T: ?Sized + 'static> Bind<'a> for &'_ T {
