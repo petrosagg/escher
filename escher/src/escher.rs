@@ -128,25 +128,29 @@ impl<T: Rebindable> Escher<T> {
     }
 }
 
+/// An instance of `Capturer` is given to the closure passed to `Escher::new` and is used to
+/// capture a reference from the async stack.
 pub struct Capturer<T> {
     ptr: Arc<AtomicPtr<T>>,
 }
 
-impl<T> Capturer<T> {
-    async fn capture_ref<'a, LiveT>(self, val: &mut LiveT)
+impl<StaticT> Capturer<StaticT> {
+    async fn capture_ref<T>(self, val: &mut T)
     where
-        // once rustc supports equality constraints this can become: `T = Rebind<'static, LiveT>`
-        LiveT: RebindTo<'static, Out = T>,
+        // once rustc supports equality constraints this can become: `StaticT = Rebind<'static, T>`
+        T: RebindTo<'static, Out = StaticT>,
     {
-        self.ptr.store(val as *mut _ as *mut T, Ordering::Release);
-        std::future::pending().await
+        self.ptr.store(val as *mut _ as *mut StaticT, Ordering::Release);
+        std::future::pending::<()>().await;
     }
 
-    pub async fn capture<LiveT>(self, mut val: LiveT)
+    /// Captures the passed value into a future that never resolves.
+    /// Callers of this method **must** `.await` it in order for Escher to capture the value.
+    pub async fn capture<T>(self, mut val: T)
     where
-        // once rustc supports equality constraints this can become: `T = Rebind<'static, LiveT>`
-        LiveT: RebindTo<'static, Out = T>,
+        // once rustc supports equality constraints this can become: `StaticT = Rebind<'static, T>`
+        T: RebindTo<'static, Out = StaticT>,
     {
-        self.capture_ref(&mut val).await
+        self.capture_ref(&mut val).await;
     }
 }
