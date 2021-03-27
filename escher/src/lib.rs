@@ -13,12 +13,13 @@
 //!
 //! # Usage
 //!
-//! This library provides the `Escher<T>` wrapper type that can hold self-referencial data and
-//! expose them safely through the `as_ref()` and `as_mut()` functions.
+//! This library provides the [Escher<T>](Escher) wrapper type that can hold self-referencial data
+//! and expose them safely through the [as_ref()](Escher::as_ref) and [as_mut()](Escher::as_mut)
+//! functions.
 //!
 //! You construct a self reference by calling Escher's constructor and providing an async closure
 //! that will initialize your self-references on its stack. Your closure will be provided with a
-//! parameter `r` that has a single `capture()` method that consumes `r`.
+//! capturer `r` that has a single [capture()](Capturer::capture) method that consumes `r`.
 //!
 //! > **Note:** It is important to `.await` the result `.capture()` in order for escher to correctly
 //! initialize your struct.
@@ -27,7 +28,8 @@
 //! references to owned data can be captured directly (see first example).
 //!
 //! To capture more than one variable or capture references to non-owned data you will have to
-//! define your own reference struct that derives `Rebindable` (see second example).
+//! define your own reference struct that derives [Rebindable](escher_derive::Rebindable) (see
+//! second example).
 //!
 //! # Examples
 //!
@@ -48,7 +50,7 @@
 //! assert_eq!("💖", *escher_heart.as_ref());
 //! ```
 //!
-//! ## Same as above but expose both the `Vec<u8>` and `&str`
+//! ## Capturing both a `Vec<u8>` and a `&str` view into it
 //!
 //! In order to capture more than one things you can define a struct that will be used to capture
 //! the variables:
@@ -75,11 +77,11 @@
 //! assert_eq!("💖", escher_heart.as_ref().s);
 //! ```
 //!
-//! ## Mutable `&mut str` view into a `Vec<u8>`
+//! ## Capturing a mutable `&mut str` view into a `Vec<u8>`
 //!
-//! If you capture a mutable reference to some piece of data then you cannot capture the data as
-//! well like the previous example. This is mandatory as doing otherwise would create two mutable
-//! references into the same piece of data that is not allowed.
+//! If you capture a mutable reference to some piece of data then you cannot capture the data
+//! itself like the previous example. This is mandatory as doing otherwise would create two mutable
+//! references into the same piece of data which is not allowed.
 //!
 //! ```rust
 //! use escher::Escher;
@@ -96,7 +98,7 @@
 //! assert_eq!("ESCHER", *name.as_ref());
 //! ```
 //!
-//! ## Multiple mixed references
+//! ## Capturing multiple mixed references
 //!
 //! ```rust
 //! use escher::{Escher, Rebindable};

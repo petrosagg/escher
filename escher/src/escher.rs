@@ -22,6 +22,9 @@ use futures_task::noop_waker;
 ///     type Out = Foo<'a>; // CORRECT
 /// }
 /// ```
+///
+/// Users should avoid implementing this trait manually and derive
+/// [Rebindable](escher_derive::Rebindable) instead.
 pub unsafe trait RebindTo<'a> {
     type Out: 'a;
 }
@@ -54,7 +57,7 @@ impl<T: for<'a> RebindTo<'a>> Rebindable for T {}
 pub type Rebind<'a, T> = <T as RebindTo<'a>>::Out;
 
 /// A containter of a self referencial struct. The self-referencial struct is constructed with the
-/// aid of the async/await machinery of rustc, see Escher::new.
+/// aid of the async/await machinery of rustc, see [Escher::new].
 pub struct Escher<T> {
     _fut: Pin<Box<dyn Future<Output = ()>>>,
     ptr: *mut T,
@@ -118,7 +121,7 @@ impl<T: Rebindable> Escher<T> {
         Escher { _fut: fut, ptr }
     }
 
-    /// Get a shared reference to the inner T with its lifetime bound to &self
+    /// Get a shared reference to the inner `T` with its lifetime bound to `&self`
     pub fn as_ref<'a>(&'a self) -> &Rebind<'a, T> {
         // SAFETY
         // Validity of reference
@@ -131,14 +134,14 @@ impl<T: Rebindable> Escher<T> {
         unsafe { &*(self.ptr as *mut _) }
     }
 
-    /// Get a mut reference to the inner T with its lifetime bound to &mut self
+    /// Get a mut reference to the inner `T` with its lifetime bound to `&mut self`
     pub fn as_mut<'a>(&'a mut self) -> &mut Rebind<'a, T> {
         // SAFETY: see safety argument of Self::as_ref
         unsafe { &mut *(self.ptr as *mut _) }
     }
 }
 
-/// An instance of `Capturer` is given to the closure passed to `Escher::new` and is used to
+/// An instance of `Capturer` is given to the closure passed to [Escher::new] and is used to
 /// capture a reference from the async stack.
 pub struct Capturer<T> {
     ptr: Arc<AtomicPtr<T>>,
