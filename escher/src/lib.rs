@@ -19,7 +19,10 @@
 //!
 //! # Examples
 //!
-//! **decode a Vec<u8> into a &str once and capture the string reference**
+//! ## A Vec<u8> and &str reference of its data.
+//!
+//! The simplest way to use Escher is to create a reference of some data and then capture it:
+//!
 //! ```rust
 //! use escher::Escher;
 //!
@@ -33,14 +36,64 @@
 //! assert_eq!("💖", *escher_heart.as_ref());
 //! ```
 //!
+//! ## Same as above but expose both the Vec<u8> and &str
+//!
+//! In order to capture more than one things you can define a struct that will be used to capture
+//! the variables:
+//!
 //! ```rust
 //! use escher::Escher;
 //!
 //! #[derive(Escher)]
-//! struct MyStruct<'a> {
-//!     int_data: &'a Box<i32>,
-//!     int_reference: &'a i32,
-//!     float_reference: &'a mut f32,
+//! struct VecStr<'this> {
+//!     data: &'this Vec<u8>,
+//!     s: &'this str,
+//! }
+//!
+//! let escher_heart = Escher::new(|r| async move {
+//!     let data: Vec<u8> = vec![240, 159, 146, 150];
+//!
+//!     r.capture(VecStr{
+//!         data: &data,
+//!         s: std::str::from_utf8(&data).unwrap(),
+//!     }).await;
+//! });
+//!
+//! assert_eq!(240, escher_heart.as_ref().data[0]);
+//! assert_eq!("💖", escher_heart.as_ref().s);
+//! ```
+//!
+//! ## Mutable &str view into a Vec<u8>
+//!
+//! If you capture a mutable reference to some piece of data then you cannot capture the data as
+//! well like the previous example. This is mandatory as doing otherwise would create two mutable
+//! references into the same piece of data that is not allowed.
+//!
+//! ```rust
+//! use escher::Escher;
+//!
+//! let mut name = Escher::new(|r| async move {
+//!     let mut data: Vec<u8> = vec![101, 115, 99, 104, 101, 114];
+//!     let name = std::str::from_utf8_mut(&mut data).unwrap();
+//!
+//!     r.capture(name).await;
+//! });
+//!
+//! assert_eq!("escher", *name.as_ref());
+//! name.as_mut().make_ascii_uppercase();
+//! assert_eq!("ESCHER", *name.as_ref());
+//! ```
+//!
+//! ## Multiple mixed references
+//!
+//! ```rust
+//! use escher::Escher;
+//!
+//! #[derive(Escher)]
+//! struct MyStruct<'this> {
+//!     int_data: &'this Box<i32>,
+//!     int_reference: &'this i32,
+//!     float_reference: &'this mut f32,
 //! }
 //!
 //! let mut my_value = Escher::new(|r| async move {
