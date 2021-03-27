@@ -14,6 +14,56 @@ Compared to the state of the art escher:
 * Uses rustc for all the analysis. If it compiles, the self references are correct
 * Contains no procedural macros, compilation is very fast
 
+## Usage
+
+This library provides the `Escher<T>` wrapper type that implements `Deref` and `DerefMut` for
+T. In order to make a self reference
+
+## Examples
+
+**decode a Vec<u8> into a &str once and capture the string reference**
+```rust
+use escher::Escher;
+
+let escher_heart = Escher::new(|r| async move {
+    let data: Vec<u8> = vec![240, 159, 146, 150];
+    let sparkle_heart = std::str::from_utf8(&data).unwrap();
+
+    r.capture(sparkle_heart).await;
+});
+
+assert_eq!("💖", *escher_heart.as_ref());
+```
+
+```rust
+use escher::Escher;
+
+#[derive(Escher)]
+struct MyStruct<'a> {
+    int_data: &'a Box<i32>,
+    int_reference: &'a i32,
+    float_reference: &'a mut f32,
+}
+
+let mut my_value = Escher::new(|r| async move {
+    let int_data = Box::new(42);
+    let mut float_data = Box::new(3.14);
+
+    r.capture(MyStruct{
+        int_data: &int_data,
+        int_reference: &int_data,
+        float_reference: &mut float_data,
+    }).await;
+});
+
+assert_eq!(Box::new(42), *my_value.as_ref().int_data);
+assert_eq!(3.14, *my_value.as_ref().float_reference);
+
+*my_value.as_mut().float_reference = (*my_value.as_ref().int_reference as f32) * 2.0;
+
+assert_eq!(84.0, *my_value.as_ref().float_reference);
+```
+
 ## How it works
 
 ### The problem with self-references
@@ -157,3 +207,5 @@ self-reference!
 
 Thank you for reading this far! If you would like to learn how escher uses the
 above concepts in detail please take a look at the implementation.
+
+License: MIT OR Apache-2.0
