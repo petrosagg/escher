@@ -26,13 +26,6 @@ pub unsafe trait RebindTo<'a> {
     type Out: 'a;
 }
 
-pub trait Rebindable: for<'a> RebindTo<'a> {}
-impl<T: for<'a> RebindTo<'a>> Rebindable for T {}
-
-/// Convinience alias to apply the type level function. `Rebind<'a, T>` computes a type that is
-/// identical to T except for its lifetimes that are now bound to 'a.
-pub type Rebind<'a, T> = <T as RebindTo<'a>>::Out;
-
 /// Blanket implementation for any reference to owned data
 unsafe impl<'a, T: ?Sized + 'static> RebindTo<'a> for &'_ T {
     type Out = &'a T;
@@ -42,6 +35,23 @@ unsafe impl<'a, T: ?Sized + 'static> RebindTo<'a> for &'_ T {
 unsafe impl<'a, T: ?Sized + 'static> RebindTo<'a> for &'_ mut T {
     type Out = &'a mut T;
 }
+
+/// Marker trait for any type that implements [RebindTo] for any lifetime. All types can derive
+/// this trait using the [Rebindable](escher_derive::Rebindable) derive macro.
+pub trait Rebindable: for<'a> RebindTo<'a> {}
+impl<T: for<'a> RebindTo<'a>> Rebindable for T {}
+
+/// Type-level function that takes a lifetime `'a` and a type `T` computes a new type `U` that is
+/// identical to `T` except for its lifetimes that are now bound to `'a`.
+///
+/// A type `T` must implement [Rebindable] in order to use this type level function.
+///
+/// For example:
+///
+/// * `Rebind<'a, &'static str> == &'a str`
+/// * `Rebind<'static, &'a str> == &'static str`
+/// * `Rebind<'c, T<'a, 'b>> == T<'c, 'c>`
+pub type Rebind<'a, T> = <T as RebindTo<'a>>::Out;
 
 /// A containter of a self referencial struct. The self-referencial struct is constructed with the
 /// aid of the async/await machinery of rustc, see Escher::new.

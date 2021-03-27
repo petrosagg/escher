@@ -274,5 +274,17 @@
 mod escher;
 mod tests;
 
-pub use crate::escher::*;
+/// This trait can be derived for any struct, enum, or union to make its lifetimes rebindable and
+/// thus compatible with the [Rebind] type level function.
+///
+/// ```
+/// use escher::Rebindable;
+///
+/// #[derive(Rebindable)]
+/// struct VecStr<'this> {
+///     data: &'this Vec<u8>,
+///     s: &'this str,
+/// }
+/// ```
 pub use escher_derive::Rebindable;
+pub use crate::escher::*;
