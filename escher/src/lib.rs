@@ -10,16 +10,28 @@
 //! * Is only around 100 lines of well-commented code
 //! * Contains only two `unsafe` calls that are well argued for
 //! * Uses rustc for all the analysis. If it compiles, the self references are correct
-//! * Contains no procedural macros, compilation is very fast
 //!
 //! # Usage
 //!
-//! This library provides the `Escher<T>` wrapper type that implements `Deref` and `DerefMut` for
-//! T. In order to make a self reference
+//! This library provides the `Escher<T>` wrapper type that can hold self-referencial data and
+//! expose them safely through the `as_ref()` and `as_mut()` functions.
+//!
+//! You construct a self reference by calling Escher's constructor and providing a closure that
+//! will initialize your self-references on its stack. Your closure will be provided with a
+//! parameter `r` that has a single `capture()` method that consumes `r`.
+//!
+//! > Note: It is important to `.await` the result `.capture()` in order for escher to correctly
+//! initialize your struct.
+//!
+//! Once all the data and references are created you can capture the desired ones. Simple
+//! references to owned data can be captured directly (see first example).
+//!
+//! To capture more than one variable or capture references to non-owned data you will have to
+//! define your own reference struct that derives `Escher` (see second example).
 //!
 //! # Examples
 //!
-//! ## A Vec<u8> and &str reference of its data.
+//! ## A `Vec<u8>` and `&str` reference of its data.
 //!
 //! The simplest way to use Escher is to create a reference of some data and then capture it:
 //!
@@ -36,7 +48,7 @@
 //! assert_eq!("💖", *escher_heart.as_ref());
 //! ```
 //!
-//! ## Same as above but expose both the Vec<u8> and &str
+//! ## Same as above but expose both the `Vec<u8>` and `&str`
 //!
 //! In order to capture more than one things you can define a struct that will be used to capture
 //! the variables:
@@ -63,7 +75,7 @@
 //! assert_eq!("💖", escher_heart.as_ref().s);
 //! ```
 //!
-//! ## Mutable &str view into a Vec<u8>
+//! ## Mutable `&mut str` view into a `Vec<u8>`
 //!
 //! If you capture a mutable reference to some piece of data then you cannot capture the data as
 //! well like the previous example. This is mandatory as doing otherwise would create two mutable
@@ -92,8 +104,8 @@
 //! #[derive(Escher)]
 //! struct MyStruct<'this> {
 //!     int_data: &'this Box<i32>,
-//!     int_reference: &'this i32,
-//!     float_reference: &'this mut f32,
+//!     int_ref: &'this i32,
+//!     float_ref: &'this mut f32,
 //! }
 //!
 //! let mut my_value = Escher::new(|r| async move {
@@ -102,17 +114,17 @@
 //!
 //!     r.capture(MyStruct{
 //!         int_data: &int_data,
-//!         int_reference: &int_data,
-//!         float_reference: &mut float_data,
+//!         int_ref: &int_data,
+//!         float_ref: &mut float_data,
 //!     }).await;
 //! });
 //!
 //! assert_eq!(Box::new(42), *my_value.as_ref().int_data);
-//! assert_eq!(3.14, *my_value.as_ref().float_reference);
+//! assert_eq!(3.14, *my_value.as_ref().float_ref);
 //!
-//! *my_value.as_mut().float_reference = (*my_value.as_ref().int_reference as f32) * 2.0;
+//! *my_value.as_mut().float_ref = (*my_value.as_ref().int_ref as f32) * 2.0;
 //!
-//! assert_eq!(84.0, *my_value.as_ref().float_reference);
+//! assert_eq!(84.0, *my_value.as_ref().float_ref);
 //! ```
 //!
 //! # How it works
