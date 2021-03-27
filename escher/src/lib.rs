@@ -34,14 +34,14 @@
 //! ```
 //!
 //! ```rust
-//! use escher::{Escher, impl_rebind};
+//! use escher::Escher;
 //!
+//! #[derive(Escher)]
 //! struct MyStruct<'a> {
 //!     int_data: &'a Box<i32>,
 //!     int_reference: &'a i32,
 //!     float_reference: &'a mut f32,
 //! }
-//! impl_rebind!(MyStruct<'_>);
 //!
 //! let mut my_value = Escher::new(|r| async move {
 //!     let int_data = Box::new(42);
@@ -247,23 +247,7 @@ unsafe impl<'a, T: ?Sized + 'static> Bind<'a> for &'_ mut T {
     type Out = &'a mut T;
 }
 
-/// Safe macro that makes a type rebindable by implementing `Bind` for all lifetimes
-#[macro_export]
-macro_rules! impl_rebind {
-    ($name:ident<'_>) => {
-        unsafe impl<'a> escher::Bind<'a> for $name<'_> {
-            type Out = $name<'a>;
-        }
-    };
-}
-
-macro_rules! impl_rebind_crate {
-    ($name:ident<'_>) => {
-        unsafe impl<'a> crate::Bind<'a> for $name<'_> {
-            type Out = $name<'a>;
-        }
-    };
-}
+pub use escher_derive::Escher;
 
 /// A containter of a self referencial struct. The self-referencial struct is constructed with the
 /// aid of the async/await machinery of rustc, see Escher::new.
@@ -362,7 +346,9 @@ impl<T> Ref<T> {
 
 #[cfg(test)]
 mod tests {
+    use crate as escher;
     use super::*;
+
     #[test]
     fn simple_ref() {
         let escher_heart = Escher::new(|r| async move {
@@ -378,11 +364,11 @@ mod tests {
     #[test]
     fn it_works() {
         /// Holds a vector and a str reference to the data of the vector
+        #[derive(Escher)]
         struct VecStr<'a> {
             data: &'a Vec<u8>,
             s: &'a str,
         }
-        impl_rebind_crate!(VecStr<'_>);
 
         let escher_heart = Escher::new(|r| async move {
             let data: Vec<u8> = vec![240, 159, 146, 150];
