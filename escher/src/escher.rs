@@ -58,12 +58,12 @@ pub type Rebind<'a, T> = <T as RebindTo<'a>>::Out;
 
 /// A containter of a self referencial struct. The self-referencial struct is constructed with the
 /// aid of the async/await machinery of rustc, see [Escher::new].
-pub struct Escher<T> {
-    _fut: Pin<Box<dyn Future<Output = ()>>>,
+pub struct Escher<'fut, T> {
+    _fut: Pin<Box<dyn Future<Output = ()> + 'fut>>,
     ptr: *mut T,
 }
 
-impl<T: Rebindable> Escher<T> {
+impl<'fut, T: Rebindable> Escher<'fut, T> {
     /// Construct a self referencial struct using the provided closure. The user is expected to
     /// construct the desired data and references to them in the async stack and capture the
     /// desired state when ready.
@@ -83,7 +83,7 @@ impl<T: Rebindable> Escher<T> {
     pub fn new<B, F>(builder: B) -> Self
     where
         B: FnOnce(Capturer<T>) -> F,
-        F: Future<Output = ()> + 'static,
+        F: Future<Output = ()> + 'fut,
     {
         let ptr = Arc::new(AtomicPtr::new(std::ptr::null_mut()));
         let r = Capturer { ptr: ptr.clone() };
@@ -110,12 +110,12 @@ impl<T: Rebindable> Escher<T> {
         );
 
         // SAFETY: At this point we know that:
-        // 1. We are given a future that has no external references because it is 'static
         // 2. We have a pointer that points into the state of the future
         // 3. The state of the future will never move again because it's behind a Pin<Box<T>>
         // 4. The pointer `ptr` points to a valid instance of T because:
-        //    a. The only way to set the pointer is through Capturer::capture that expects a T
-        //    b. The strong count of AtomicPtr is 2, so the async stack is in Capturer::capture_ref because:
+        //    a. T will be kept alive as long as the future is kept alive, and we own it
+        //    b. The only way to set the pointer is through Capturer::capture that expects a T
+        //    c. The strong count of AtomicPtr is 2, so the async stack is in Capturer::capture_ref because:
         //       α. Capturer is not Clone, so one cannot fake the increased refcount
         //       β. Capturer::capture consumes Capturer so when the function returns the Arc will be dropped
         Escher { _fut: fut, ptr }
