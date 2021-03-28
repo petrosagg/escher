@@ -162,8 +162,9 @@ let foo = Foo::magic_construct();
 let bar = foo; // move foo to a new location
 println!("{:?}", bar.p); // access the self-reference, memory error!
 ```
-
-![Moves invalidate pointer](https://github.com/petrosagg/escher/blob/master/assets/moves-invalidate-pointer.png?raw=true)
+<p align="center">
+    <img src="https://github.com/petrosagg/escher/blob/master/assets/moves-invalidate-pointer.png?raw=true" width="600" />
+</p>
 
 ### Almost-self-references on the stack
 
@@ -206,7 +207,10 @@ and pass an `AlmostFoo` to them. In other words, as long as the code that wants
 to use `AlmostFoo` is above `make_foo()` we can use this technique and work
 with almost-self-references.
 
-![Almost self-reference](https://github.com/petrosagg/escher/blob/master/assets/almost-foo.png?raw=true)
+<p align="center">
+    <img src="https://github.com/petrosagg/escher/blob/master/assets/almost-foo.png?raw=true" width="600" />
+</p>
+
 
 This is pretty restrictive though. Ideally we'd lke to be able return some
 owned value and be free to move it around, put it on the heap, etc.
@@ -259,7 +263,9 @@ We're almost there! We now have an owned value, the future, that somewhere
 inside it has an AlmostFoo instance. However we have no way of retrieving the
 exact memory location of it or accessing it in any way. The Future is opaque.
 
-![Async stack](https://github.com/petrosagg/escher/blob/master/assets/async-stack.png?raw=true)
+<p align="center">
+    <img src="https://github.com/petrosagg/escher/blob/master/assets/async-stack.png?raw=true" width="600" />
+</p>
 
 ### Putting it all together
 
