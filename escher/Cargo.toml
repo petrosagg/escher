@@ -15,5 +15,5 @@ exclude = [
 
 
 [dependencies]
-escher-derive = { version = "0.1.0", path = "../escher-derive" }
+escher-derive = { version = "0.2.0", path = "../escher-derive" }
 futures-task = "0.3"
