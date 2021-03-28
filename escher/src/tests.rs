@@ -57,6 +57,49 @@ fn adversarial_capture_non_stack() {
 }
 
 #[test]
+fn capture_enum() {
+    /// Holds a vector and a str reference to the data of the vector
+    #[derive(Rebindable,PartialEq,Debug)]
+    enum MaybeStr<'a> {
+        Some(&'a str),
+        None
+    }
+
+    let mut escher_heart = Escher::new(|r| async move {
+        let data: Vec<u8> = vec![240, 159, 146, 150];
+        let sparkle_heart = std::str::from_utf8(&data).unwrap();
+
+        r.capture(MaybeStr::Some(sparkle_heart)).await;
+    });
+    assert_eq!(MaybeStr::Some("💖"), *escher_heart.as_ref());
+    *escher_heart.as_mut() = MaybeStr::None;
+    assert_eq!(MaybeStr::None, *escher_heart.as_ref());
+}
+
+#[test]
+fn capture_union() {
+    /// Holds a vector and a str reference to the data of the vector
+    #[derive(Rebindable)]
+    union MaybeStr<'a> {
+        some: &'a str,
+        none: (),
+    }
+
+    let mut escher_heart = Escher::new(|r| async move {
+        let data: Vec<u8> = vec![240, 159, 146, 150];
+        let sparkle_heart = std::str::from_utf8(&data).unwrap();
+
+        r.capture(MaybeStr { some: sparkle_heart }).await;
+    });
+
+    unsafe {
+        assert_eq!("💖", escher_heart.as_ref().some);
+        escher_heart.as_mut().none = ();
+        assert_eq!((), escher_heart.as_ref().none);
+    }
+}
+
+#[test]
 fn it_works() {
     /// Holds a vector and a str reference to the data of the vector
     #[derive(Rebindable)]
