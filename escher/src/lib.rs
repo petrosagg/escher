@@ -1,9 +1,9 @@
 //! > Self-referencial structs using async stacks
 //!
-//! Escher is an extremely simple library providing a safe and sound API to build
-//! self-referencial structs. It works by (ab)using the async await trasformation
-//! of rustc. If you'd like to know more about the inner workings please take a
-//! look at the [How it works](#how-it-works) section and the source code.
+//! Escher is an extremely simple library providing a safe and sound API to build self-referencial
+//! structs. It works by (ab)using the async await trasformation of rustc. If you'd like to know
+//! more about the inner workings please take a look at the [How it
+//! works](https://github.com/petrosagg/escher#how-it-works) section and the source code.
 //!
 //! Compared to the state of the art escher:
 //!
