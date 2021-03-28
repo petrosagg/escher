@@ -15,6 +15,48 @@ fn simple_ref() {
 }
 
 #[test]
+fn simple_mut_ref() {
+    let escher_heart = Escher::new(|r| async move {
+        let data: Vec<u8> = vec![240, 159, 146, 150];
+        let sparkle_heart = std::str::from_utf8(&data).unwrap();
+
+        r.capture(sparkle_heart).await;
+    });
+
+    assert_eq!("💖", *escher_heart.as_ref());
+}
+
+#[test]
+#[should_panic(expected = "capture no longer live")]
+fn adversarial_sync_fn() {
+    Escher::new(|r| {
+        let data: Vec<u8> = vec![240, 159, 146, 150];
+        let sparkle_heart = std::str::from_utf8(&data).unwrap();
+
+        let _ = r.capture(sparkle_heart);
+
+        // dummy future to satisfy escher
+        std::future::ready(())
+    });
+}
+
+#[test]
+#[should_panic(expected = "captured value outside of async stack")]
+fn adversarial_capture_non_stack() {
+    Escher::new(|r| {
+        let data: Vec<u8> = vec![240, 159, 146, 150];
+        let sparkle_heart = std::str::from_utf8(&data).unwrap();
+
+        let fut = r.capture(sparkle_heart);
+        // make it appear as if capture is still alive
+        std::mem::forget(fut);
+
+        // dummy future to satisfy escher
+        std::future::ready(())
+    });
+}
+
+#[test]
 fn it_works() {
     /// Holds a vector and a str reference to the data of the vector
     #[derive(Rebindable)]
