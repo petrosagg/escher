@@ -1,6 +1,6 @@
 #![cfg(test)]
-use crate as escher;
 use super::*;
+use crate as escher;
 
 #[test]
 fn simple_ref() {
@@ -59,10 +59,10 @@ fn adversarial_capture_non_stack() {
 #[test]
 fn capture_enum() {
     /// Holds a vector and a str reference to the data of the vector
-    #[derive(Rebindable,PartialEq,Debug)]
+    #[derive(Rebindable, PartialEq, Debug)]
     enum MaybeStr<'a> {
         Some(&'a str),
-        None
+        None,
     }
 
     let mut escher_heart = Escher::new(|r| async move {
@@ -89,7 +89,10 @@ fn capture_union() {
         let data: Vec<u8> = vec![240, 159, 146, 150];
         let sparkle_heart = std::str::from_utf8(&data).unwrap();
 
-        r.capture(MaybeStr { some: sparkle_heart }).await;
+        r.capture(MaybeStr {
+            some: sparkle_heart,
+        })
+        .await;
     });
 
     unsafe {

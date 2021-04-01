@@ -157,7 +157,8 @@ impl<StaticT> Capturer<StaticT> {
         // once rustc supports equality constraints this can become: `StaticT = Rebind<'static, T>`
         T: RebindTo<'static, Out = StaticT>,
     {
-        self.ptr.store(val as *mut _ as *mut StaticT, Ordering::Release);
+        self.ptr
+            .store(val as *mut _ as *mut StaticT, Ordering::Release);
         std::future::pending::<()>().await;
     }
 
