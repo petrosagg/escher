@@ -1,5 +1,6 @@
 use std::future::Future;
 use std::pin::Pin;
+use std::ptr::NonNull;
 use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::Arc;
 use std::task::Context;
@@ -60,7 +61,7 @@ pub type Rebind<'a, T> = <T as RebindTo<'a>>::Out;
 /// aid of the async/await machinery of rustc, see [Escher::new].
 pub struct Escher<'fut, T> {
     _fut: Pin<Box<dyn Future<Output = ()> + 'fut>>,
-    ptr: *mut T,
+    ptr: NonNull<T>,
 }
 
 impl<'fut, T: Rebindable> Escher<'fut, T> {
@@ -118,7 +119,10 @@ impl<'fut, T: Rebindable> Escher<'fut, T> {
         //    c. The strong count of AtomicPtr is 2, so the async stack is in Capturer::capture_ref because:
         //       α. Capturer is not Clone, so one cannot fake the increased refcount
         //       β. Capturer::capture consumes Capturer so when the function returns the Arc will be dropped
-        Escher { _fut: fut, ptr }
+        Escher {
+            _fut: fut,
+            ptr: unsafe { NonNull::new_unchecked(ptr) },
+        }
     }
 
     /// Get a shared reference to the inner `T` with its lifetime bound to `&self`
@@ -131,13 +135,13 @@ impl<'fut, T: Rebindable> Escher<'fut, T> {
         //    The resulting reference is has all its lifetimes bound to the lifetime of self that
         //    contains _fut that contains all the data that ptr could be referring to because it's
         //    a 'static Future
-        unsafe { &*(self.ptr as *mut _) }
+        unsafe { &*(self.ptr.as_ptr() as *mut _) }
     }
 
     /// Get a mut reference to the inner `T` with its lifetime bound to `&mut self`
     pub fn as_mut<'a>(&'a mut self) -> &mut Rebind<'a, T> {
         // SAFETY: see safety argument of Self::as_ref
-        unsafe { &mut *(self.ptr as *mut _) }
+        unsafe { &mut *(self.ptr.as_ptr() as *mut _) }
     }
 }
 
