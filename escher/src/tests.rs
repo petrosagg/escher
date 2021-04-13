@@ -2,38 +2,40 @@
 use super::*;
 use crate as escher;
 
-#[test]
-fn simple_ref() {
-    let escher_heart = Escher::new(|r| async move {
-        let data: Vec<u8> = vec![240, 159, 146, 150];
-        let sparkle_heart = std::str::from_utf8(&data).unwrap();
-
-        r.capture(sparkle_heart).await;
-    });
-
-    assert_eq!("💖", *escher_heart.as_ref());
-}
-
-#[test]
-fn simple_mut_ref() {
-    let escher_heart = Escher::new(|r| async move {
-        let data: Vec<u8> = vec![240, 159, 146, 150];
-        let sparkle_heart = std::str::from_utf8(&data).unwrap();
-
-        r.capture(sparkle_heart).await;
-    });
-
-    assert_eq!("💖", *escher_heart.as_ref());
-}
+// #[test]
+// fn test_dtonlay() {
+//     use std::cell::Cell;
+//
+//     #[derive(Rebindable)]
+//     struct Struct<'a>(fn(&'a String));
+//
+//     fn main() {
+//         static STRING: String = String::new();
+//         thread_local!(static CELL: Cell<&'static String> = Cell::new(&STRING));
+//         let escher = Escher::new(|r| async {
+//             r.capture(Struct(|x| CELL.with(|cell| cell.set(x)))).await;
+//         });
+//         let mut string = Ok(".".repeat(3));
+//         let f = escher.as_ref().0;
+//         let s = string.as_ref().unwrap();
+//         f(s);
+//         string = Err((s.as_ptr(), 100usize, 100usize));
+//         CELL.with(|cell| println!("{}", cell.get()));
+//         string.unwrap_err();
+//     }
+// }
 
 #[test]
 #[should_panic(expected = "capture no longer live")]
 fn adversarial_sync_fn() {
+    #[derive(Rebindable)]
+    struct MyStr<'a>(&'a str);
+
     Escher::new(|r| {
         let data: Vec<u8> = vec![240, 159, 146, 150];
         let sparkle_heart = std::str::from_utf8(&data).unwrap();
 
-        let _ = r.capture(sparkle_heart);
+        let _ = r.capture(MyStr(sparkle_heart));
 
         // dummy future to satisfy escher
         std::future::ready(())
@@ -43,11 +45,14 @@ fn adversarial_sync_fn() {
 #[test]
 #[should_panic(expected = "captured value outside of async stack")]
 fn adversarial_capture_non_stack() {
+    #[derive(Rebindable)]
+    struct MyStr<'a>(&'a str);
+
     Escher::new(|r| {
         let data: Vec<u8> = vec![240, 159, 146, 150];
         let sparkle_heart = std::str::from_utf8(&data).unwrap();
 
-        let fut = r.capture(sparkle_heart);
+        let fut = r.capture(MyStr(sparkle_heart));
         // make it appear as if capture is still alive
         std::mem::forget(fut);
 
@@ -65,15 +70,13 @@ fn capture_enum() {
         None,
     }
 
-    let mut escher_heart = Escher::new(|r| async move {
+    let escher_heart = Escher::new(|r| async move {
         let data: Vec<u8> = vec![240, 159, 146, 150];
         let sparkle_heart = std::str::from_utf8(&data).unwrap();
 
         r.capture(MaybeStr::Some(sparkle_heart)).await;
     });
     assert_eq!(MaybeStr::Some("💖"), *escher_heart.as_ref());
-    *escher_heart.as_mut() = MaybeStr::None;
-    assert_eq!(MaybeStr::None, *escher_heart.as_ref());
 }
 
 #[test]
@@ -85,7 +88,7 @@ fn capture_union() {
         none: (),
     }
 
-    let mut escher_heart = Escher::new(|r| async move {
+    let escher_heart = Escher::new(|r| async move {
         let data: Vec<u8> = vec![240, 159, 146, 150];
         let sparkle_heart = std::str::from_utf8(&data).unwrap();
 
@@ -97,8 +100,6 @@ fn capture_union() {
 
     unsafe {
         assert_eq!("💖", escher_heart.as_ref().some);
-        escher_heart.as_mut().none = ();
-        assert_eq!((), escher_heart.as_ref().none);
     }
 }
 

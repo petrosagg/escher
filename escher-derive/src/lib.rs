@@ -36,5 +36,13 @@ pub fn derive_rebindable(input: TokenStream) -> TokenStream {
         unsafe impl<#(#impl_params),*> escher::RebindTo<'a> for #name<#(#type_params),*> {
            type Out = #name<#(#out_params),*>;
         }
+
+        impl escher::Rebindable for #name<#(#type_params),*> {
+            fn rebind<'short, 'long: 'short>(&'long self) -> &'short escher::Rebind<'short, Self>
+            where Self: 'long
+            {
+                self
+            }
+        }
     })
 }

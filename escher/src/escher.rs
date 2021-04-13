@@ -42,8 +42,10 @@ unsafe impl<'a, T: ?Sized + 'static> RebindTo<'a> for &'_ mut T {
 
 /// Marker trait for any type that implements [RebindTo] for any lifetime. All types can derive
 /// this trait using the [Rebindable](escher_derive::Rebindable) derive macro.
-pub trait Rebindable: for<'a> RebindTo<'a> {}
-impl<T: for<'a> RebindTo<'a>> Rebindable for T {}
+pub trait Rebindable: for<'a> RebindTo<'a> {
+    fn rebind<'short, 'long: 'short>(&'long self) -> &'short Rebind<'short, Self>
+    where Self: 'long;
+}
 
 /// Type-level function that takes a lifetime `'a` and a type `T` computes a new type `U` that is
 /// identical to `T` except for its lifetimes that are now bound to `'a`.
@@ -70,16 +72,19 @@ impl<'fut, T: Rebindable> Escher<'fut, T> {
     /// desired state when ready.
     ///
     /// ```rust
-    /// use escher::Escher;
+    /// use escher::{Escher, Rebindable};
+    ///
+    /// #[derive(Rebindable)]
+    /// struct MyStr<'a>(&'a str);
     ///
     /// let escher_heart = Escher::new(|r| async move {
     ///     let data: Vec<u8> = vec![240, 159, 146, 150];
     ///     let sparkle_heart = std::str::from_utf8(&data).unwrap();
     ///
-    ///     r.capture(sparkle_heart).await;
+    ///     r.capture(MyStr(sparkle_heart)).await;
     /// });
     ///
-    /// assert_eq!("💖", *escher_heart.as_ref());
+    /// assert_eq!("💖", escher_heart.as_ref().0);
     /// ```
     pub fn new<B, F>(builder: B) -> Self
     where
@@ -135,13 +140,12 @@ impl<'fut, T: Rebindable> Escher<'fut, T> {
         //    The resulting reference is has all its lifetimes bound to the lifetime of self that
         //    contains _fut that contains all the data that ptr could be referring to because it's
         //    a 'static Future
-        unsafe { &*(self.ptr.as_ptr() as *mut _) }
+        unsafe { (&*self.ptr.as_ptr()).rebind() }
     }
 
     /// Get a mut reference to the inner `T` with its lifetime bound to `&mut self`
     pub fn as_mut<'a>(&'a mut self) -> &mut Rebind<'a, T> {
-        // SAFETY: see safety argument of Self::as_ref
-        unsafe { &mut *(self.ptr.as_ptr() as *mut _) }
+        unimplemented!()
     }
 }
 

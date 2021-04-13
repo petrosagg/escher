@@ -38,16 +38,19 @@
 //! The simplest way to use Escher is to create a reference of some data and then capture it:
 //!
 //! ```rust
-//! use escher::Escher;
+//! use escher::{Escher, Rebindable};
+//!
+//! #[derive(Rebindable)]
+//! struct MyStr<'a>(&'a str);
 //!
 //! let escher_heart = Escher::new(|r| async move {
 //!     let data: Vec<u8> = vec![240, 159, 146, 150];
 //!     let sparkle_heart = std::str::from_utf8(&data).unwrap();
 //!
-//!     r.capture(sparkle_heart).await;
+//!     r.capture(MyStr(sparkle_heart)).await;
 //! });
 //!
-//! assert_eq!("💖", *escher_heart.as_ref());
+//! assert_eq!("💖", escher_heart.as_ref().0);
 //! ```
 //!
 //! ## Capturing both a `Vec<u8>` and a `&str` view into it
@@ -76,27 +79,27 @@
 //! assert_eq!(240, escher_heart.as_ref().data[0]);
 //! assert_eq!("💖", escher_heart.as_ref().s);
 //! ```
-//!
-//! ## Capturing a mutable `&mut str` view into a `Vec<u8>`
-//!
-//! If you capture a mutable reference to some piece of data then you cannot capture the data
-//! itself like the previous example. This is mandatory as doing otherwise would create two mutable
-//! references into the same piece of data which is not allowed.
-//!
-//! ```rust
-//! use escher::Escher;
-//!
-//! let mut name = Escher::new(|r| async move {
-//!     let mut data: Vec<u8> = vec![101, 115, 99, 104, 101, 114];
-//!     let name = std::str::from_utf8_mut(&mut data).unwrap();
-//!
-//!     r.capture(name).await;
-//! });
-//!
-//! assert_eq!("escher", *name.as_ref());
-//! name.as_mut().make_ascii_uppercase();
-//! assert_eq!("ESCHER", *name.as_ref());
-//! ```
+//
+// ## Capturing a mutable `&mut str` view into a `Vec<u8>`
+//
+// If you capture a mutable reference to some piece of data then you cannot capture the data
+// itself like the previous example. This is mandatory as doing otherwise would create two mutable
+// references into the same piece of data which is not allowed.
+//
+// ```rust
+// use escher::Escher;
+//
+// let mut name = Escher::new(|r| async move {
+//     let mut data: Vec<u8> = vec![101, 115, 99, 104, 101, 114];
+//     let name = std::str::from_utf8_mut(&mut data).unwrap();
+//
+//     r.capture(name).await;
+// });
+//
+// assert_eq!("escher", *name.as_ref());
+// name.as_mut().make_ascii_uppercase();
+// assert_eq!("ESCHER", *name.as_ref());
+// ```
 //!
 //! ## Capturing multiple mixed references
 //!
@@ -123,10 +126,6 @@
 //!
 //! assert_eq!(Box::new(42), *my_value.as_ref().int_data);
 //! assert_eq!(3.14, *my_value.as_ref().float_ref);
-//!
-//! *my_value.as_mut().float_ref = (*my_value.as_ref().int_ref as f32) * 2.0;
-//!
-//! assert_eq!(84.0, *my_value.as_ref().float_ref);
 //! ```
 
 mod escher;
